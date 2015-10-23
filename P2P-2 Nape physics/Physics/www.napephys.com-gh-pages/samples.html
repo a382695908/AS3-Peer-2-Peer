@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="description" content="Nape is an open source physics library for Haxe and ActionScript3."/>
+        <meta name="keywords" content="Nape,Physics,Haxe,AS3,Flash,Constraint,Rigid,Body,Shape,"/>
+        <meta name="author" content="Luca Deltodesco"/>
+        <meta charset="UTF-8"/>
+
+        <title>Nape Physics</title>
+
+        <link rel="shortcut icon" href="assets/ico/favicon.ico"/>
+        <link rel="stylesheet" href="assets/css/puritan.css"/>
+        <link rel="stylesheet" href="assets/css/basestyle.css"/>
+        <link rel="stylesheet" href="assets/prettify/prettify.css"/>
+    </head>
+
+    <body>
+    <div class="container">
+        <div class="title-area">
+            <div id="title"></div>
+            <script type="text/javascript"> var page="Samples"; </script>
+            <script type="text/javascript"> var root=""; </script>
+            <div id="menu"></div>
+        </div>
+
+        <div id="sample-overlay" class="sample-overlay"></div>
+        <div id="sample-panel" class="sample-panel">
+            <div class="sample-panel-inner">
+                <div class="sample-panel-title">
+                    <b id="sample-title"></b>
+                    <div class="sample-title-block">
+                        <a class="tab-enabled" id="sample-tab-swf"  href="#swf">.swf</a>
+                        <a class="tab-enabled" id="sample-tab-as3"  href="#as3">.as3</a>
+                        <a class="tab-enabled" id="sample-tab-haxe" href="#haxe">.hx</a>
+                    </div>
+                </div>
+                <div id="sample-panel-content" class="sample-panel-content">
+                </div>
+                <div class="sample-panel-footer">
+                    <div class="sample-panel-info" id="sample-info"></div>
+                    <div class="sample-close">
+                        <a href="#" id="sample-close">Close</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-content">
+            <div style="height: 20px"></div>
+            <span class="samples-font">
+            <p>
+                <b>Nape Samples</b> are intended to both demonstrate the <b>capabilities</b> of the engine, as well as <b>demonstrating</b> how to use the engine through practice. All samples have documented source in <b>AS3/Haxe</b> to accompany them.
+
+            </p>
+            </span>
+            <h3 class="sample-header">Getting Started.</h3>
+            <div class="sample-content">
+                These samples are specifically intended to demonstrate the basics of using <b>Nape</b>. All code for the samples is self-contained with no additional utilities being used.
+            </div>
+            <br/>
+            <div class="section-content">
+                <table class="sample-table">
+                <tr>
+                    <td class="sample-title" colspan="2"><b>BasicSimulation</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>FixedDragging</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b></b></td>
+                    <td class="sample-spacer"></td>
+                </tr>
+                <tr class="sample-tr">
+                    <td class="sample-desc">
+                        Setting up a basic <b>Nape</b> simulation with <b>debug drawing</b>.
+                        <a class="sample-link" id="BasicSimulation"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/BasicSimulation.png" alt="[BasicSimulation]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        <b>Fixed time-step</b> simulations and <b>dragging</b> objects with mouse.
+                        <a class="sample-link" id="FixedDragging"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/FixedDragging.png" alt="[FixedDragging]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                    </td>
+                    <td class="sample-image">
+                    </td>
+                </tr>
+                </table>
+            </div>
+            <h3 class="sample-header">Feature Demonstrations.</h3>
+            <div class="sample-content">
+                <i>Samples make use of a <b>Template</b> class to hide common code and focus on features. Download samples to view this class.</i>
+            </div>
+            <br/>
+            <div class="section-content">
+                <table class="sample-table">
+                <tr>
+                    <td class="sample-title" colspan="2"><b>FilteringInteractions</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>Constraints</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>PerlinSquares</b></td>
+                    <td class="sample-spacer"></td>
+                </tr>
+                <tr class="sample-tr">
+                    <td class="sample-desc">
+                        Filtering collisions and other interaction types.
+                        <a class="sample-link" id="FilteringInteractions"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/FilteringInteractions.png" alt="[FilteringInteractions]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Demonstrating all built-in Nape constraints.
+                        <a class="sample-link" id="Constraints"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/Constraints.png" alt="[Constraints]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Demonstrating MarchingSquares and polygon decompositions.
+                        <a class="sample-link" id="PerlinSquares"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/PerlinSquares.png" alt="[PerlinSquares]"/>
+                    </td>
+                </tr>
+                <tr height="20"></tr>
+                <tr>
+                    <td class="sample-title" colspan="2"><b>SpatialQueries</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>SoftBodies</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>PyramidStressTest</b></td>
+                    <td class="sample-spacer"></td>
+                </tr>
+                <tr class="sample-tr">
+                    <td class="sample-desc">
+                        Convex casts, Ray casts and spatial sampling of Space using Circles AABBs and Shapes
+                        <a class="sample-link" id="SpatialQueries"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/SpatialQueries.png" alt="[SpatialQueries]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Creating Soft Bodies through use of Constraints and additional logic.
+                        <a class="sample-link" id="SoftBodies"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/SoftBodies.png" alt="[SoftBodies]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Stress testing physics collisions, huge pyramid, large number of iterations!
+                        <a class="sample-link" id="PyramidStressTest"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/PyramidStressTest.png" alt="[PyramidStressTest]"/>
+                    </td>
+                </tr>
+                <tr height="20"></tr>
+                <tr>
+                    <td class="sample-title" colspan="2"><b>Viewports</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>MarioGalaxyGravity</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>OneWayPlatforms</b></td>
+                    <td class="sample-spacer"></td>
+                </tr>
+                <tr class="sample-tr">
+                    <td class="sample-desc">
+                        Using callbacks system for viewport logic.
+                        <a class="sample-link" id="Viewports"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/Viewports.png" alt="[Viewports]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Using methods of Geom and additional logic to create
+                        Mario Galaxy style gravity effects.
+                        <a class="sample-link" id="MarioGalaxyGravity"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/MarioGalaxyGravity.png" alt="[MarioGalaxyGravity]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Creating one-way platforms, demonstrating conveyor belts
+                        and kinematic bodies in addition.
+                        <a class="sample-link" id="OneWayPlatforms"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/OneWayPlatforms.png" alt="[OneWayPlatforms]"/>
+                    </td>
+                </tr>
+                <tr height="20"></tr>
+                <tr>
+                    <td class="sample-title" colspan="2"><b>BodyFromGraphic</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>DestructibleTerrain</b></td>
+                    <td class="sample-spacer"></td>
+                    <td class="sample-title" colspan="2"><b>Portals</b></td>
+                    <td class="sample-spacer"></td>
+                </tr>
+                <tr class="sample-tr">
+                    <td class="sample-desc">
+                        Using MarchingSquares to generated Nape Bodies from Bitmaps and DisplayObjects.
+                        <a class="sample-link" id="BodyFromGraphic"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/BodyFromGraphic.png" alt="[BodyFromGraphic]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Using MarchingSquares to create efficient destructible terrain using a Bitmap.
+                        <a class="sample-link" id="DestructibleTerrain"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/DestructibleTerrain.png" alt="[DestructibleTerrain]"/>
+                    </td>
+                    <td class="sample-spacer"></td>
+
+                    <td class="sample-desc">
+                        Very complex demo, creating general purpose Portals with callbacks and UserConstraint.
+                        <a class="sample-link" id="Portals"></a>
+                    </td>
+                    <td class="sample-image">
+                        <img width="128" height="128" src="assets/Portals.png" alt="[Portals]"/>
+                    </td>
+                </tr>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            &copy; Luca Deltodesco 2012
+        </footer>
+    </div>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/jquery.flash.js"></script>
+    <script src="assets/prettify/prettify.js"></script>
+    <script src="assets/js/default.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            // Sample panel.
+            // ==========================================
+
+            var sampleName
+            function fadeInSample(name) {
+                sampleName = name;
+
+                // Fade in overlay and panels.
+                var overlay = $("#sample-overlay");
+                var panel = $("#sample-panel");
+
+                overlay.css("display", "block");
+                overlay.css("opacity", 0);
+                overlay.fadeTo(200, 0.4);
+                panel.css("dispaly", "block");
+                panel.css("opactity", 0);
+                panel.fadeTo(200, 1.0);
+
+                // Set title name.
+                $("#sample-title").html(name);
+            }
+
+            function sampleSWF() {
+                window.location.hash = ("swf-" + sampleName);
+
+                var name = $("#sample-title").html();
+                $("#sample-panel-content").empty();
+                $("#sample-panel-content").flash(
+                    { src: "samples/"+name+"/"+name+".swf",
+                      bgColor: 333333,
+                      width: 800,
+                      height: 600, },
+                    { version: '11.0.0' }
+                );
+                $("#sample-panel-content").removeAttr("style");
+                $("#sample-panel-content").css("background-color", "#333333");
+
+                $("#sample-tab-swf").addClass("tab-disabled").
+                                     removeClass("tab-enabled").
+                                     removeAttr('href');
+
+                $("#sample-info").css("display", "inline");
+                $("#sample-info").load("samples/"+name+"/instructions.html",
+                    function (_, status, _) {
+                        if (status === "error") {
+                            $(this).html("Could not load file!");
+                        }
+                    });
+
+                var as3 = $("#sample-tab-as3");
+                if (as3.hasClass("tab-disabled")) {
+                    as3.addClass("tab-enabled").
+                        removeClass("tab-disabled").
+                        attr('href', '#as3');
+                }
+
+                var haxe = $("#sample-tab-haxe");
+                if (haxe.hasClass("tab-disabled")) {
+                    haxe.addClass("tab-enabled").
+                         removeClass("tab-disabled").
+                         attr('href', '#haxe');
+                }
+            }
+
+            function sampleAS3() {
+                window.location.hash = ("as3-" + sampleName);
+
+                $("#sample-panel-content").html('');
+                $("#sample-panel-content").empty();
+                var pre = $('<pre class="prettyprint darkered codestyle linenums"></pre>');
+                $("#sample-panel-content").append(pre);
+
+                $.ajax({
+                    url: "samples/"+sampleName+"/"+sampleName+".as",
+                    mimeType: "text/plain",
+                    processData: false,
+                    success : function (data) {
+                        pre.html(data);
+                        prettyPrint();
+                    },
+                    error : function () {
+                        pre.html("Could not load file!");
+                    }
+                });
+
+                $("#sample-info").css("display", "none");
+
+                $("#sample-panel-content").css("overflow", "auto");
+                $("#sample-tab-as3").addClass("tab-disabled").
+                                     removeClass("tab-enabled").
+                                     removeAttr('href');
+
+                var swf = $("#sample-tab-swf");
+                if (swf.hasClass("tab-disabled")) {
+                    $("#sample-panel-content").removeClass("flash-replaced");
+                    swf.addClass("tab-enabled").
+                        removeClass("tab-disabled").
+                        attr('href', '#swf');
+                }
+
+                var haxe = $("#sample-tab-haxe");
+                if (haxe.hasClass("tab-disabled")) {
+                    haxe.addClass("tab-enabled").
+                         removeClass("tab-disabled").
+                         attr('href', '#haxe');
+                }
+            }
+
+            function sampleHaxe() {
+                window.location.hash = ("haxe-" + sampleName);
+
+                $("#sample-panel-content").html('');
+                $("#sample-panel-content").empty();
+                var pre = $('<pre class="prettyprint darkered codestyle linenums"></pre>');
+                $("#sample-panel-content").append(pre);
+
+                $.ajax({
+                    url: "samples/"+sampleName+"/"+sampleName+".hx",
+                    mimeType: "text/plain",
+                    processData: false,
+                    success : function (data) {
+                        pre.html(data);
+                        prettyPrint();
+                    },
+                    error : function () {
+                        pre.html("Could not load file!");
+                    }
+                });
+
+                $("#sample-info").css("display", "none");
+
+                $("#sample-panel-content").css("overflow", "auto");
+                $("#sample-tab-haxe").addClass("tab-disabled").
+                                      removeClass("tab-enabled").
+                                      removeAttr('href');
+
+                var swf = $("#sample-tab-swf");
+                if (swf.hasClass("tab-disabled")) {
+                    $("#sample-panel-content").removeClass("flash-replaced");
+                    swf.addClass("tab-enabled").
+                        removeClass("tab-disabled").
+                        attr('href', '#swf');
+                }
+
+                var as3 = $("#sample-tab-as3");
+                if (as3.hasClass("tab-disabled")) {
+                    as3.addClass("tab-enabled").
+                        removeClass("tab-disabled").
+                        attr('href', '#as3');
+                }
+            }
+
+
+            $("#sample-close").click(function (event) {
+                // Reset hash, keep current scroll positions.
+                var x = $(window).scrollLeft();
+                var y = $(window).scrollTop();
+                window.location.hash = "";
+                window.scrollTo(x, y);
+                event.preventDefault();
+
+                // fade out sample box and overlay.
+                $("#sample-overlay").fadeTo(200, 0, function () {
+                    $(this).css("display", "none");
+                });
+                $("#sample-panel").fadeTo(200, 0, function () {
+                    $(this).css("display", "none");
+                });
+
+                // Clear sample content.
+                $("#sample-panel-content").html("");
+            });
+
+            $(".sample-link").click(function (event) {
+                var name = $(this).attr("id");
+                fadeInSample(name);
+                sampleSWF();
+            });
+
+            $(".sample-link").hover(function (event) {
+                $(this).fadeTo(100, 0.6);
+            }, function (event) {
+                $(this).fadeTo(100, 1.0);
+            });
+
+            $(".tab-enabled").click(function (event) {
+                event.preventDefault();
+
+                if ($(this).hasClass("tab-disabled")) {
+                    return;
+                }
+
+                console.log("hiya" + $(this).attr('href'));
+                var href = $(this).attr('href');
+                if (href === '#swf') {
+                    sampleSWF();
+                }
+                else if (href === '#as3') {
+                    sampleAS3();
+                }
+                else if (href === '#haxe') {
+                    sampleHaxe();
+                }
+            });
+
+            $(window).resize(function () {
+                var samplePanel = $("#sample-panel");
+
+                var width  = $(window).width();
+                var height = $(window).height();
+
+                var boxWidth  = parseInt(samplePanel.css("width"));
+                var boxHeight = parseInt(samplePanel.css("height"));
+
+                var leftValue = (width  >= boxWidth  ? ((width / 2)  - (boxWidth / 2))  : (width  - boxWidth));
+                var topValue  = (height >= boxHeight ? ((height / 2) - (boxHeight / 2)) : (height - boxHeight));
+
+                samplePanel.css("left", (leftValue + "px"));
+                samplePanel.css("top",  (topValue  + "px"));
+            });
+            $(window).resize();
+
+            // Handle sample #hash-tags
+            // ==========================================
+            var hash = window.location.hash;
+            if (hash) {
+                if (hash.substr(0, 5) === '#swf-') {
+                    var name = hash.substr(5);
+                    fadeInSample(name);
+                    sampleSWF();
+                }
+                else if (hash.substr(0, 5) === '#as3-') {
+                    var name = hash.substr(5);
+                    fadeInSample(name);
+                    sampleAS3();
+                }
+                else if (hash.substr(0, 6) === '#haxe-') {
+                    var name = hash.substr(6);
+                    fadeInSample(name);
+                    sampleHaxe();
+                }
+            }
+        });
+    </script>
+    </body>
+</html>
+

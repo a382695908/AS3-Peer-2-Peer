@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="description" content="Nape is an open source physics library for Haxe and ActionScript3."/>
+        <meta name="keywords" content="Nape,Physics,Haxe,AS3,Flash,Constraint,Rigid,Body,Shape,"/>
+        <meta name="author" content="Luca Deltodesco"/>
+        <meta charset="UTF-8"/>
+
+        <title>Nape Physics</title>
+
+        <link rel="shortcut icon" href="../assets/ico/favicon.ico"/>
+        <link rel="stylesheet" href="../assets/css/puritan.css"/>
+        <link rel="stylesheet" href="../assets/css/basestyle.css"/>
+        <link rel="stylesheet" href="../assets/prettify/prettify.css"/>
+    </head>
+
+    <body>
+    <div class="container">
+        <div class="title-area">
+            <div id="title"></div>
+            <script type="text/javascript"> var page="../Help.html~Manual.html"; </script>
+            <script type="text/javascript"> var root="../"; </script>
+            <div id="menu"></div>
+        </div>
+
+        <div class="section-content">
+            <div id="submenu"></div>
+            <div style="height: 40px"></div>
+            <div class="chapter"><strong><span class="title">Introduction</span></strong>
+                <div class="contents" id="skip-Introduction"></div>
+                <strong><span class="section">About</span></strong>
+                <p>
+                    <b>Nape</b> is a 2D rigid body physics engine designed for games, written in <b>Haxe</b>, and
+                    supporting all Haxe targets. <b>Nape</b> is compiled into <b>.swc</b> libraries for AS3 users.
+                    <b>Nape</b> is written for ease of development, with a powerful and succinct API that
+                    <i>(outside of a release build)</i> checks it is being used correctly, and reports <b>errors</b> if it is not.
+                </p>
+                <p>
+                    <b>Nape</b> is higher performing than <b>Box2D</b> solutions in AS3/Haxe, and its memory usage is
+                    stable and far less than Box2D. <b>Nape</b> supports the majority of Box2D features, as well as many
+                    features not included in Box2D such as the <b>geometric utilities</b>, the <b>high-level callbacks</b>
+                    system, and more sophisticated <b>buoyancy</b>.
+                </p>
+                <p>
+                    We expect the performance of <b>Nape</b> to be somewhere between 3 and 6 times faster than <b>Box2D</b>
+                    on average, whilst using about half the amount of memory (And importantly, having constant memory size).
+                    You may also expect the equivalent solution to a problem in <b>Nape</b> to be 2-3 times smaller than in <b>Box2D</b>.
+                </p>
+                <strong><span class="section">Prerequisites</span></strong>
+                <p>
+                    I will assume that you are familiar with the physics concepts: <b>mass</b>, <b>moment of inertia</b>,
+                    <b>force</b>, <b>torque</b>, <b>density</b>, <b>impulses</b>. If you are not familiar with the term
+                    <b>moment of inertia</b>, this is the angular equivalent to <b>mass</b>, similarly <b>torque</b> is
+                    the angular equivalent to <b>force</b>. If you are not otherwise familiar with these terms, I suggest
+                    you consult Wikipedia.
+                </p>
+                <strong><span class="section">Units</span></strong>
+                <p>
+                    <b>Nape</b> uses units of <b>pixels</b> for distances, <i>not</i> metres such as in <b>Box2D</b>. You
+                    should keep this in mind as - like with Box2D - physics tuning assumes a rough range of expected sizes
+                    in objects; objects should be in most cases, somewhere between 2px at the absolute smallest up to 200px.
+                </p>
+                <p>
+                    <b>Nape</b> uses <b>SI</b> units in all other cases:
+                    <ul>
+                    <li>
+                        <b>seconds</b> as units of time.
+                    </li>
+                    <li>
+                        <b>kilograms</b> as units of mass.
+                    </li>
+                    <li>
+                        <b>clockwise radians</b> as units of angle <i>(Assuming the y-axis is pointing down)</i>.
+                    </li>
+                    </ul>
+                    Other measurements will take expected forms, eg. <b>velocity</b> has units of <b>pixels/second</b>;
+                    the single exception is <b>density</b>, which takes units of <b>grams/pixel/pixel</b> so as to keep values sensible
+                    <i>(A box measuring 100x100 pixels, with density 1 will in this format have a mass of 10 kilograms)</i>.
+                </p>
+                <strong><span class="section">API design</span></strong>
+                <p>
+                    <b>Nape</b> has an API that is in some regards, perhaps unusual compared to the majority of Haxe and AS3
+                    APIs. These aspects should be intuitive <i>(if surprisingly so)</i>. For <b>Haxe</b> users, <b>Nape</b> has been written
+                    with the <b>flash</b> target as its main focus, and many API choices reflect this by using only a
+                    subset of <b>Haxe</b> that has direct equivalents in <b>AS3</b>.
+                </p>
+                <ul>
+                    <li>
+                        In <b>AS3</b> you may be more familiar with enumerations <i>(eg. Event::type)</i> as being
+                        <b>Strings</b>; in <b>Nape</b> enumerations are strictly-typed as a set of read-only, static
+                        fields of the corresponding enum class. <i>(Haxe users, these are not the same as Haxe enums).</i>
+                        <pre class="prettyprint standard boxedcode largecodestyle">
+var dynamicType:BodyType = BodyType.DYNAMIC;</pre>
+                        There are of course, reasons why this is very good; it is <b>impossible</b> to assign an enumeration
+                        value that is invalid, and when accessing a property of an object, you <b>know</b> that it is an
+                        enumeration, and what values it can take.
+                    </li>
+                    <br/>
+                    <li>
+                        In the <b>Flash</b> API, you can often find instances where you have to do things like:
+                        <pre class="prettyprint standard boxedcode largecodestyle">
+sprite.filters.push(blurFilter);
+sprite.filters = sprite.filters; // &lt;--
+
+sprite.transform.a = 2;
+sprite.transform = sprite.transform; // &lt;--</pre>
+                        In <b>Nape</b>, you do not need to do things like this, the effects of modifying an objects properties
+                        is automatically taken into account as part of a <b>lazy</b> system that avoids repeated calculations.
+                        <pre class="prettyprint standard boxedcode largecodestyle">
+var bodyPosition:Vec2 = body.position;
+bodyPosition.x = 10;
+// no need to 'refresh' the body, informing it that the position was changed.</pre>
+                    </li>
+                    <li>
+                        In <b>most</b> physics libraries, it is necessary to constantly <i>wake up</i> or <i>activate</i> an object
+                        that may have gone to sleep. In <b>Nape</b> these actions are - similar to above - <b>automatic</b>.
+                    </li>
+                    <br/>
+                    <li>
+                        In <b>most</b> APIs, you can never be quite sure that you are using the API correctly. It is common to
+                        find issues where someone has misused the API but their code has otherwise worked in <b>most</b> cases.
+                        Such bugs can be hard to find.
+                        <br/>
+                        In <b>Nape</b>, when working with the <b>development</b> build, each API usage is checked to ensure that
+                        it is <b>valid</b>, and you can be sure that you are not misusing the API - introducing bugs.
+                    </li>
+                </ul>
+                <strong><span class="section">Bug Reports</span></strong>
+                <p>
+                    If you think you have found a <b>bug</b> in Nape, the very first question I will ask you is: "Are you
+                    using the <b>development build</b>?". If, when running your project with the <b>development build</b>, you
+                    receive errors then I will <i>not</i> accept your report as it means you are misusing the API and that is
+                    the more likely reason why something bad is happening.
+                </p>
+                <p>
+                    If that is not the case, then the procedure for reporting bugs should be to run your project using the
+                    <b>debug build</b> (To see if any internal assertions are thrown) and issue a report on
+                    <a class="doclink" href="http://github.com/deltaluca/nape">github</a>.
+                </p>
+                <p>
+                    As part
+                    of your bug report you should include a <b>minimal test case</b>. The smaller your test case is, the
+                    easier it is to track a bug; preferably your test case should <i>not</i> have a <b>main loop</b>, and should
+                    certainly not have any <b>user interaction</b>, or be dependent on <b>random numbers</b>.
+                </p>
+                <strong><span class="section">Packages</span></strong>
+                <p>
+                    The <b>Nape</b> core is split into the following packages:
+                    <table class="dl">
+                        <tr><td class="dt"><b>nape:</b></td><td class="tdsp"></td><td>Top-level package</td></tr>
+                        <tr><td class="dt"><b>nape.callbacks:</b></td><td class="tdsp"></td><td>Objects related to the callback system, such as
+                            <b>CbType</b>, and <b>InteractionListener</b> objects.</td></tr>
+                        <tr><td class="dt"><b>nape.constraint:</b></td><td class="tdsp"></td><td>Physics constraints such as the <b>WeldJoint</b> and <b>LineJoint</b></td></tr>
+                        <tr><td class="dt"><b>nape.dynamics:</b></td><td class="tdsp"></td><td>Objects related to dynamical interactions such as the <b>Arbiter</b> and <b>Contact</b> types.</td></tr>
+                        <tr><td class="dt"><b>nape.geom:</b></td><td class="tdsp"></td><td>Geometric objects such as <b>Vec2</b> and <b>Mat23</b>, as well as geometric utilities
+                            available through the <b>Geom</b> and <b>GeomPoly</b> objects among others.</td></tr>
+                        <tr><td class="dt"><b>nape.phys:</b></td><td class="tdsp"></td><td>Physics objects such as <b>Body</b>, <b>Compound</b> <i>(Groups bodies
+                            and constraints together)</i> and <b>Material</b> <i>(Defines physical properties of <b>Shapes</b>)</i>.</td></tr>
+                        <tr><td class="dt"><b>nape.shape:</b></td><td class="tdsp"></td><td>Physics shapes: <b>Circle</b>, <b>Polygon</b> and related objects.</td></tr>
+                        <tr><td class="dt"><b>nape.space:</b></td><td class="tdsp"></td><td>Contains the <b>Space</b> object responsible for controlling simulations and related objects.</td></tr>
+                        <tr><td class="dt"><b>nape.util:</b></td><td class="tdsp"></td><td>Contains such things as <b>Debug</b> drawing utilities and version information.</td></tr>
+                    </table>
+                    <dl>
+                    </dl>
+                </p>
+            </div>
+
+
+
+
+
+            <hr class="hrchapter"/>
+            <div class="chapter"><strong><span class="title">Hello Nape</span></strong>
+                <div class="contents" id="skip-Hello Nape"></div>
+                <p>
+                    In this chapter, we will look at creating a basic simulation with <b>Nape</b>.
+                </p>
+                <p>
+                    This chapter reads like a <b>tutorial</b>, and for example source code you should check the <a class="doclink" href="../samples.html#swf-BasicSimulation">BasicSimulation</a> code sample.
+                </p>
+                <strong><span class="section">Setting up a Space</span></strong>
+                <p>
+                    A <b>Space</b> is responsive for simulating physics in <b>Nape</b>. We add physics objects such
+                    as <b>Bodies</b> and <b>Constraints</b> that will be simulated, and add <b>Listeners</b> to make
+                    use of <b>Nape</b> callbacks.
+                </p>
+                <p>
+                    A <b>Space</b> object is instantiated with an optional <b>gravity</b> vector which will be applied
+                    to all rigid bodies.
+                </p>
+                <pre class="prettyprint standard largecodestyle boxedcode">
+var gravity:Vec2 = new Vec2(0, 600); // units are pixels/second/second
+var space:Space = new Space(gravity);</pre>
+                <strong><span class="section">Adding some Bodies</span></strong>
+                <p>
+                    Creating rigid bodies involves constructing a <b>Body</b> object, and giving it some <b>Shapes</b>.
+                </p>
+                <p>
+                    The <b>Body</b> defines physical <b>positions</b>/<b>rotations</b>/<b>velocities</b>, and <b>Shapes</b> give it a physical
+                    form; each <b>Shape</b> has a <b>Material</b> that defines physical properties like <b>friction</b> and <b>density</b>.
+                </p>
+                <p>
+                    When creating a <b>Body</b> we define what type of body it is with the <b>BodyType</b> enumeration.
+                </p>
+                <pre class="prettyprint standard largecodestyle boxedcode">
+var staticBody   :Body = new Body(BodyType.STATIC);
+var kinematicBody:Body = new Body(BodyType.KINEMATIC);
+var dynamicBody  :Body = new Body(BodyType.DYNAMIC);
+var anotherDynamicBody:Body = new Body(); // Default value for BodyType argument is DYNAMIC.</pre>
+                <p>
+                    <ul>
+                        <li>A <b>static</b> body - once assigned to a <b>Space</b> - is fixed; it cannot be moved or rotated, or have <b>Shapes</b> removed from it; a <b>static</b> body has no velocity. We can, however, perform mutations such as changing the shape materials.</li>
+                        <li>A <b>kinematic</b> body is similar to a <b>static</b> body, except that it is permitted to have a velocity which will strictly define how the <b>kinematic</b> body moves. Such bodies will not be effected by gravity or any constraints including contacts. You can think of <b>kinematic</b> bodies as being animated.</li>
+                        <li>A <b>dynamic</b> body is under control of the physics simulation, it will fall under gravity, be pulled at by constraints and be effected by collisions and buoyancy forces.</li>
+                    </ul>
+                </p>
+                <strong><span class="section">Creating a static floor</span></strong>
+                <p>
+                    To create a <b>floor</b>, we can make use of a <b>Polygon</b> shape.
+                </p>
+                <p>
+                    <b>Polygons</b> in <b>Nape</b> are defined by a set of convex coordinates; it doesn't matter whether they are in clockwise, or counter-clockwise order. The constructor for the <b>Polygon</b> shape takes as its first argument, the set of coordinates which is dynamically typed to accept one of: <b>Array&lt;</b><b>Vec2</b><b>&gt;</b>, <b>Vec2List</b>, <b>flash.Vector&lt;</b><b>Vec2</b><b>&gt;</b> or a <b>GeomPoly</b>.
+                </p>
+                <img width="200" src="../assets/convexity.png" alt="[Convexity]"/>
+                <p>
+                    The <b>Polygon</b> class also has a few <b>static</b> methods for generating <b>Arrays</b> of <b>Vec2</b> that can be used to construct <b>Polygons</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var rectangleVertices:Array<Vec2> = Polygon.rect(top-left-x, top-left-y, width, height);
+var boxVertices      :Array<Vec2> = Polygon.box(width, height);
+// ^ equivalent to Polygon.rect(-width/2, -height/2, width, height);
+var pentagonVertices :Array<Vec2> = Polygon.regular(width, height, 5);</pre>
+                <p>
+                    <table><tr>
+                    <td class="dt"><b>NOTE:</b></td>
+                    <td class="tdsp"></td>
+                    <td>
+                    A <b>Body</b> will always rotate about its centre, regardless of where the <b>centre-of-mass</b> exists.
+                    For this reason, it is important that a <b>dynamic</b> type <b>Body</b> has its centre-of-mass at local
+                    coordinates <b>(0,0)</b>. The <b>Body</b> object has methods to translate its shapes in the local
+                    coordinate system, as well as a method <b>align</b> which will apply the necessary translation to move
+                    the centre-of-mass to the origin.
+                    <br/><br/>
+                    If you are creating a <b>dynamic</b> box object, you would then want to use the <b>Polygon.box</b> method
+                    to define the vertices, and set the <b>position</b> of the <b>Body</b> to be where you want the box to
+                    be created in the <b>Space</b>.
+                    </td>
+                    </tr></table>
+                </p>
+                <p>
+                    For a <b>static</b> floor object, that is not rotating it does not matter where the <b>centre-of-mass</b> lies, and we are free to use the <b>Polygon.rect</b> method.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var floorBody:Body = new Body(BodyType.STATIC);
+var floorShape:Polygon = new Polygon(Polygon.rect(0, stage.height, stage.width, 1));</pre>
+                <p>
+                    To add the <b>Shape</b> to the <b>Body</b> we can use one of two methods:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Either
+floorShape.body = floorBody;
+// Or
+floorBody.shapes.add(floorShape); // or use the push or unshift methods </pre>
+                <p>
+                    The choice is entirely up to you, and whichever you consider to be the appropriate style. You can also
+                    remove <b>Shapes</b> in the equivalent ways by using the <b>remove</b> method on the <b>ShapeList</b>, or simply setting the <b>body</b> property of the <b>Shape</b> to <b>null</b>.
+                </p>
+                <p>
+                    To add the <b>Body</b> to the <b>Space</b> we have a similar set of choices for adding/removing:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Either
+floorBody.space = space;
+// Or
+space.bodies.add(floorBody);</pre>
+                <strong><span class="section">Adding a dynamic circle</span></strong>
+                <p>
+                    For our circle object, we will use the <b>Circle</b> shape type.
+                </p>
+                <p>
+                    <b>Circles</b> in <b>Nape</b> are defined by a <b>radius</b> and a <b>local position</b> in the <b>Body</b> it is assigned to, these are respectively, the arguments to the <b>Circle</b> constructor.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var circle:Circle = new Circle(10); // local position argument is optional.
+var anotherCircle:Circle = new Circle(10, new Vec2(5, 0));</pre>
+                <p>
+                    We'll position the circle so that it is in the middle of the <b>stage</b> and give it an initial <b>velocity</b>
+                    to throw it down to the floor.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var circleBody:Body = new Body(); // Implicit BodyType.DYNAMIC
+circleBody.position.setxy(stage.width/2, stage.height/2);
+// or circleBody.position = new Vec2(stage.width/2, stage.height/2);
+// or circleBody.position.x = stage.width/2; etc.
+circleBody.velocity.setxy(0, 1000);</pre>
+                <p>
+                    We'd also like this object to be bouncy, for which we defer to the <b>Material</b> object.
+                </p>
+                <strong><span class="section">Shape Materials</span></strong>
+                <p>
+                    <b>Materials</b> in <b>Nape</b> define coefficients of <b>dynamic</b>, <b>static</b> and <b>rolling</b>
+                    friction, <b>elasticity</b> and <b>density</b> for the <b>Shapes</b> they are assigned to. The <b>density</b> is used in computing the mass, moment of inertia, and centre of mass of a <b>Body</b> whilst the other values are combined in contact calculations and other frictional computations like fluid drag.
+                </p>
+                <p>
+                    We can change the <b>Material</b> of a <b>Shape</b> at any time, even for <b>static</b> <b>Bodies</b>. <b>Shapes</b> are constructed with their own <b>Material</b> object corresponding to the default <b>Material</b>. For
+                    the construction of <b>Materials</b>, there are also some pre-set factories as static methods of the <b>Material</b> class.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Set individual values
+circleShape.material.elasticity = 1;
+circleShape.material.density = 4;
+
+// Assign a totally different Material, can use this style to share Materials.
+circleShape.material = Material.rubber();</pre>
+                <p>
+                    To learn how the values of the <b>Materials</b> will be combined, and what the valid ranges are for the properties you should check the API page for <b>Material</b>.
+                </p>
+                <strong><span class="section">Running the simulation</span></strong>
+                <p>
+                    To run a simulation, we use the <b>step</b> function on the <b>Space</b>. We will call this function sequentially
+                    each frame to advance the simulation, objects will be moved forward based on velocities with <b>gravity</b> and <b>drag</b> being applied. Collision detection will occur with new <b>contacts</b> created, and all <b>constraints</b> will be solved. When using the <b>callbacks</b> system, this function will also invoke your callback handlers.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Step forwards in simulation by given amount of seconds.
+space.step(deltaTime);</pre>
+                <p>
+                    We can also specify the number of physics iterations that should be used. These iterations are used to solve the physics
+                    constraints and are split into two categories.
+                    <table class="dl">
+                        <tr><td class="dt"><b>Velocity Iterations</b></td><td class="tdsp"></td><td>In this stage, we are solving all the
+                            constraints and contacts to resolve errors in <b>velocities</b> of objects. This is the most important stage
+                            in solving the physics system. The default value is <b>10</b></td></tr>
+                        <tr><td class="dt"><b>Position Iterations</b></td><td class="tdsp"></td><td>In this stage, we are solving all the
+                            constraints and contacts to resolve errors in <b>positions</b> of objects that remain after having solved for
+                            velocity errors, and integrated the positions of objects. This stage is necessary to resolve <b>penetrations</b>
+                            between objects, and to resolve positional errors of <b>stiff</b> constraints. Position iterations are
+                            lighter-weight than velocity iterations and the default value is <b>10</b></td></tr>
+                    </table>
+                </p>
+                <strong><span class="section">Setting up Debug Draw</span></strong>
+                <p>
+                    <b>Nape</b> provides two methods of debug drawing:
+                    <table class="dl">
+                        <tr><td class="dt"><b>ShapeDebug</b></td><td class="tdsp"></td><td>Debug drawing using a <b>Sprite</b> with the flash drawing API. This is the most portable debug drawer, working in <b>Haxe</b> through <b>NME</b> for all <b>NME</b> targets.</td></tr>
+                        <tr><td class="dt"><b>BitmapDebug</b></td><td class="tdsp"></td><td>Debug drawing using a <b>Bitmap</b> and <b>Alchemy</b> opcodes for extremely fast line drawing. This is available only for <b>flash10+</b> targets and when targeting flash should generally be preferred due to the much higher performance.</td></tr>
+                    </table>
+                    These objects have equivalent APIs.
+                </p>
+                <p>
+                    The constructors for both debug drawers take as arguments, the <b>width/height</b> of the viewport, and a background colour.
+                </p>
+                <p>
+                    This viewport is used to cull drawing of objects that are not visible (when enabled), and for the <b>BitmapDebug</b>
+                    object, defines the size of the bitmap. The background colour is used to <b>tint</b> colours to emulate alpha
+                    drawing (Avoiding more expensive alpha-based rendering); for <b>BitmapDebug</b> this defines the base colour
+                    for the bitmap.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var debug:Debug = new BitmapDebug(stage.stageWidth, stage.stageHeight, stage.color);</pre>
+                <p>
+                    To display the debug view on the screen, you will add <b>debug.display</b> to the <b>DisplayList</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var display:DisplayObject = debug.display;
+addChild(display);</pre>
+                <p>
+                    The <b>Debug</b> objects have many methods for drawing things like <b>lines</b> and <b>curves</b>, as well as a <b>transform</b> <b>Mat23</b> property that can be used to transform the input geometry (With which we can 'move' our viewport around the world). For this chapter we need only to draw the <b>Space</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Clear the debug display.
+debug.clear();
+// Draw our Space.
+debug.draw(space);
+// Flush draw calls, until this is called nothing will actually be displayed.
+debug.flush();</pre>
+            </div>
+
+            <hr class="hrchapter"/>
+            <div class="chapter"><strong><span class="title">Interactions</span></strong>
+                <div class="contents" id="skip-Interactions"></div>
+                <p>
+                    <table class="dl">
+                        <tr><td class="dt"><b>Collision</b></td><td class="tdsp"></td><td>Default interaction type; when two
+                            <b>Shapes</b> intersect (and are able to collide), they will collide with <b>friction</b> and
+                            <b>elasticity</b> as defined by the shape <b>Materials</b>.</td></tr>
+                        <tr><td class="dt"><b>Sensor</b></td><td class="tdsp"></td><td>With this interaction type, two intersecting <b>Shapes</b> will simply pass through each other. <b>Arbiter</b> objects will still be created to catalogue the overlap, and you can still receive <b>callbacks</b>.</td></tr>
+                        <tr><td class="dt"><b>Fluid</b></td><td class="tdsp"></td><td>This interaction type corresponds to <b>Nape</b>'s implementation of <b>buoyancy</b>. When two <b>Shapes</b> intersect, the <b>Bodies</b> will receive <b>buoyancy</b> and <b>drag</b> forces as determined by the <b>fluidEnabled</b> <b>Shapes</b>' <b>FluidProperties</b>, and the profiles of the <b>Shapes</b> (A stick will experience differing drag depending on the direction it moves through the fluid).</td></tr>
+                    </table>
+                </p>
+                <strong><span class="section">Controlling Interactions</span></strong>
+                <p>
+                    The type of interaction that occurs depends on the shape's <b>InteractionFilters</b>, and the
+                    <b>sensorEnabled</b> and <b>fluidEnabled</b> <b>Shape</b> flags.
+                </p>
+                <p>
+                    At a basic level, two <b>static</b> bodies can never interact in any way, and with the exception of
+                    <b>sensor</b> interactions, at least one of the bodies must be <b>dynamic</b> for an interaction to occur.
+                    This means that the only interaction which can occur between two <b>kinematic</b> bodies, is that of a
+                    <b>sensor</b> interaction.
+                </p>
+                <p>
+                    <b>Sensor</b> interactions have the highest precedence, followed by <b>fluid</b> interactions, and finally
+                    <b>collision</b> interactions. For any interaction to occur, the <b>InteractionFilters</b> of the shapes
+                    must <i>agree</i> to interact. For <b>sensor</b> and <b>fluid</b> interactions, we must additionally have at
+                    least one of the <b>Shapes</b> <i>enabled</i> for that interaction type.
+                </p>
+                <p>
+                    The specific procedure used by <b>Nape</b> to decide what sort of interaction occurs is defined like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+if ((shapeA.sensorEnabled || shapeB.sensorEnabled) &amp;&amp; shapeA.filter.shouldSense(shapeB.filter)) {
+    SENSOR INTERACTION!!
+}
+else if (bodyA.isDynamic() || bodyB.isDynamic()) {
+    if ((shapeA.fluidEnabled || shapeB.fluidEnabled) &amp;&amp; shapeA.filter.shouldFlow(shapeB.filter)) {
+        FLUID INTERACTION!!
+    }
+    else if (shapeA.filter.shouldCollide(shapeB.filter)) {
+        COLLISION INTERACTION!!
+    }
+}</pre>
+                <strong><span class="section">InteractionFilters</span></strong>
+                <p>
+                    <b>InteractionFilters</b> work much like you may be familiar with in <b>Box2D</b> and other physics engines.
+                    The filters define a <b>group</b> and <b>mask</b> integer, and two filters <i>agree</i> to
+                    interact only if:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+(filterA.group &amp; filterB.mask != 0) &amp;&amp; (filterB.group &amp; filterA.mask != 0)</pre>
+                <p>
+                    <b>Nape</b> takes this concept a step further, by having separate <b>group</b> and <b>masks</b> for each
+                    interaction type. This permits finer grained control on what sort of interaction occurs; it is for
+                    example, possible to have a <b>fluidEnabled</b> <b>Shape</b> which due to interaction filters,
+                    collides instead.
+                </p>
+                <p>
+                    If you are unfamiliar with thinking of integers are binary values, it is still easy to construct suitable
+                    <b>group</b>/<b>mask</b> values in a pragmatic way. Say we have 3 types of objects: <b>balls</b>,
+                    <b>boxes</b> and... <b>doughnuts</b>. Furthermore let's say that the <b>balls</b> should not collide with
+                    <b>boxes</b> or <b>doughnuts</b>, and <b>doughnuts</b> should not collide with other <b>doughnuts</b>.
+                </p>
+                <p>
+                    <table class="table">
+                        <tr><td class="border-right border-bottom"></td><td class="border-bottom">Balls</td><td class="border-bottom">Boxes</td><td class="border-bottom">Donuts</td></tr>
+                        <tr><td class="border-right">Balls</td><td><b>Yes</b></td><td>No</td><td>No</td></tr>
+                        <tr><td class="border-right">Boxes</td><td>No</td><td><b>Yes</b></td><td><b>Yes</b></td></tr>
+                        <tr><td class="border-right">Donuts</td><td>No</td><td><b>Yes</b></td><td>No</td></tr>
+                    </table>
+                </p>
+                <p>
+                    It is clear this table is symmetric. Now, if we assign <b>groups</b> like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+ballFilter    .collisionGroup = 1; // in binary this is 0000...00001
+boxFilter     .collisionGroup = 2; // in binary this is 0000...00010
+doughnutFilter.collisionGroup = 4; // in binary this is 0000...00100</pre>
+                <p>
+                    Then we can assign <b>masks</b> to match our table - in the most permissive way - like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+ballFilter    .collisionMask = ~(2|4); // in binary this is 1111...11001
+boxFilter     .collisionMask = ~1;     // in binary this is 1111...11110
+doughnutFilter.collisionMask = ~(1|4); // in binary this is 1111...11010</pre>
+                <p>
+                    The reason this works, is that we can interpret the expression
+                    <span class="codestyle">(group &amp; mask) != 0</span> as meaning "Group and Mask have at least one bit both
+                    equal to 1". In our case, we did not want the <b>doughnuts</b> to collide amongst themselves, and we seen in
+                    the binary representation of the <b>group</b>/<b>mask</b> that the only place the doughnut group has bit
+                    equal to 1 is in the 3rd position, and in the mask, this bit is 0.
+                </p>
+                <p>
+                    The default values for all <b>group</b>/<b>mask</b> properties is <b>1</b> and <b>~0</b> which have
+                    binary representations <b>0000...00001</b> and <b>1111...11111</b>.
+                </p>
+                <strong><span class="section">InteractionGroups</span></strong>
+                <p>
+                    <b>InteractionGroups</b> provide an additional way of controlling interactions between objects.
+                    <b>InteractionGroups</b> can be formed into <b>trees</b> and assigned to <b>Shapes</b>, <b>Bodies</b> and
+                    <b>Compounds</b> (Compounds will be discussed later).
+                </p>
+                <p>
+                    Before two <b>Shapes</b> interact, we search for the <b>most-recent common ancestor</b> in the
+                    <b>InteractionGroup</b> tree; if that group exists, and is set to <b>ignore</b> interactions, then the
+                    two <b>Shapes</b> will not interact.
+                </p>
+                <img src="../assets/InteractionGroup.png" alt="[InteractionGroup ex.]"/>
+                <p>
+                    In this example, we have group <b>G1</b> assigned to body <b>B1</b>, group <b>G2</b> assigned to shape
+                    <b>S2</b> and compound <b>C1</b>, and has <b>G1</b> as its <b>parent</b>. Group <b>G3</b> is assigned to
+                    compound <b>C2</b>. We can compress the example case into the right-hand side graph by looking up the
+                    tree to find the closest <b>InteractionGroup</b>.
+                </p>
+                <p>
+                    In this example, should we look at shapes <b>S2</b> and <b>S3</b>, and if <b>G2</b> is set to
+                    <b>accept</b> interactions, then <b>S2</b> and <b>S3</b> are permitted to interact. If <b>G1</b> is set
+                    to <b>ignore</b> interactions, then <b>S1</b> and <b>S2</b> will <i>not</i> be permitted to interact.
+                </p>
+                <p>
+                    <b>InteractionFilters</b> are more powerful than <b>InteractionGroups</b> in controlling interaction,
+                    however <b>InteractionGroups</b> can be very useful. Imagine that we have a robotic mechanism, and we
+                    do not want the robot to collide with itself, the easiest way to implement this is to create a
+                    <b>Compound</b> containing the robot, and then assigning it to a unique <b>InteractionGroup</b> set
+                    to <b>ignore</b> interactions. If we were to use <b>InteractionFilters</b> for this, then we would be
+                    forced to <b>use up</b> a bit in the <b>group</b>/<b>mask</b> values, and we would be limited to only
+                    a small number of robots.
+                </p>
+                <strong><span class="section">Constraints</span></strong>
+                <p>
+                    Though we have not introduced <b>Constraints</b> yet, we must mention one further feature. All
+                    <b>Constraints</b> have an <b>ignore</b> property, which if set to <b>true</b> will not permit any of
+                    the <b>Bodies</b> related to the <b>Constraint</b> to interact.
+                </p>
+            </div>
+
+            <hr class="hrchapter"/>
+            <div class="chapter"><strong><span class="title">Constraints</span></strong>
+                <div class="contents" id="skip-Constraints"></div>
+                <p>
+                    <b>Constraints</b> in <b>Nape</b> bind bodies together. Typical examples uses would be for things such
+                    as rag dolls, cars, and mechanical contraptions.
+                </p>
+                <p>
+                    Most of the <b>Constraint</b> types are <b>positional</b> constraints, such as the <b>PivotJoint</b>
+                    which, given two local positions on the <b>Bodies</b>, locks those points together allowing the bodies
+                    to mutually rotate about that point. Many constraints are given upper and lower limits such as the
+                    <b>DistanceJoint</b> which locks the points on two <b>Bodies</b> to be within a given range of values.
+                </p>
+                <p>
+                    All <b>positional</b> constraints can be set as <b>stiff</b> or <b>elastic</b>. When using <b>elastic</b> constraints,
+                    we can set <b>frequency</b> and <b>damping</b> values to control the elastic behaviour, and can set <b>maxForce</b>
+                    and <b>maxError</b> to determine how much force is used, and how much error we resolve per second.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+constraint.stiff = false;
+constraint.frequency = 30; //Hz
+constraint.damping = 10; //Large over-dampening
+
+// Constraint will use no more than 1000 Newtons to resolve constraint.
+constraint.maxForce = 1000;
+// Constraint will resolve no more than 10 units of positional error per second.
+constraint.maxError = 10;
+// The exact behaviour of maxError is dependent on constraint formulation.</pre>
+                <p>
+                    By setting the appropriate properties, we can also permit a <b>Constraint</b> to be broken if its error becomes too
+                    large, or for <b>elastic</b> constraints, if the force required to solve the constraint becomes too large. With
+                    the <b>callbacks</b> system, we can receive a callback when a constraint is broken.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+constraint.breakUnderError = true;
+constraint.maxError = 10; // If constraint exceeds 10 units of error, constraint will break.
+constraint.removeOnBreak = false; // Instead of removing constraint, it will simply be de-activated when broken.</pre>
+                <p>
+                    Compared to other physics engines, in <b>Nape</b> there is no concept of <b>ownership</b> when it comes
+                    to <b>Constraints</b>. If you remove a <b>Body</b>, then any <b>Constraints</b> using the <b>Body</b>
+                    that are in the <b>Space</b> will <i>not</i> be removed automatically. The main reason is that you are
+                    free to modify what <b>Bodies</b> a <b>Constraint</b> works upon at any time.
+                </p>
+                <p>
+                    To emulate behaviour of other engines, you could use the pattern:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+while (!body.constraints.empty()) {
+        body.constraints.at(0).space = null;
+}
+body.space = null;</pre>
+                <p>
+                    However, it is very likely that you could achieve better code by making use of <b>Nape</b> <b>Compounds</b>.
+                </p>
+                <p>
+                    As you will be able to see, <b>Constraints</b> have a similar API to <b>Bodies</b> when it comes to adding/removing
+                    them from <b>Spaces</b>. The <b>Body</b> <b>constraints</b> list tracks those <b>Constraints</b> which make use of the
+                    <b>Body</b>, and which are assigned to a <b>Space</b>, which is why the above pattern works.
+                </p>
+                <p>
+                    If you wish to know more about the mathematics behind the constraint derivations checkout <a class="doclink" href="Constraints.pdf">this</a> pdf.
+                </p>
+                <strong><span class="section">PivotJoint</span></strong>
+                <p>
+                    A <b>PivotJoint</b> locks two points, defined locally to the assigned <b>Bodies</b>, to be the same
+                    in <b>world</b> space. The <b>Bodies</b> will then rotate about this point.
+                </p>
+                <img src="../assets/PivotJoint.png" alt="[PivotJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+body2.localPointToWorld(anchor2) == body1.localPointToWorld(anchor1)</pre>
+                <p>
+                    Construction of a <b>PivotJoint</b> requires two <b>Bodies</b> together with two <b>Vec2s</b> defining the local anchor points.
+                    As is common with all <b>Nape</b> constraints, you are permitted to assign <b>null</b> <b>Bodies</b> whenever the constraint
+                    is <b>inactive</b> or not part of a <b>Space</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var pivotJoint:Constraint = new PivotJoint(body1, body2, anchor1, anchor2);</pre>
+                <p>
+                    If instead, you already have the <b>Bodies</b> positioned correctly, and know the <b>world</b> position of the anchors, then you could use the following pattern to construct the <b>PivotJoint</b>
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var anchor1:Vec2 = body1.worldPointToLocal(anchor);
+var anchor2:Vec2 = body2.worldPointToLocal(anchor);
+var pivotJoint:Constraint = new PivotJoint(body1, body2, anchor1, anchor2);</pre>
+
+                <strong><span class="section">WeldJoint</span></strong>
+                <p>
+                    A <b>WeldJoint</b> is like a <b>PivotJoint</b>, except that the relative rotations of the <b>Bodies</b>
+                    is also locked to a fixed value. This system is solved together for extra stability compared to using
+                    separate <b>PivotJoint</b> and <b>AngleJoint</b>.
+                </p>
+                <img src="../assets/WeldJoint.png" alt="[WeldJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+body2.localPointToWorld(anchor2) == body1.localPointToWorld(anchor1)
+body2.rotation == body1.rotation + phase</pre>
+                <p>
+                    The choice of anchors is important as it defines where the bodies will rotate relative to each other
+                    whenever the joint is forced to stretch, or when it is set as <b>elastic</b>.
+                </p>
+                <p>
+                    Construction of a <b>WeldJoint</b> requires two <b>Bodies</b> together with two <b>Vec2s</b> defining the local anchor points. The phase can optionally be defined here, and is defaulted to <b>0</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var weldJoint:Constraint = new WeldJoint(body1, body2, anchor1, anchor2, phase=0);</pre>
+                <p>
+                    If instead, you already have the <b>Bodies</b> positioned correctly, and know the <b>world</b> position of the anchors, then you could use the following pattern to construct the <b>WeldJoint</b>
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var anchor1:Vec2 = body1.worldPointToLocal(anchor);
+var anchor2:Vec2 = body2.worldPointToLocal(anchor);
+var phase:Float = body2.rotation - body1.rotation;
+var weldJoint:Constraint = new WeldJoint(body1, body2, anchor1, anchor2, phase);</pre>
+
+                <strong><span class="section">DistanceJoint</span></strong>
+                <p>
+                    A <b>DistanceJoint</b> constrains the distance between two locally defined points on the <b>Bodies</b>
+                    to be restricted to a given range.
+                </p>
+                <p>
+                    Please note, that defining a <b>DistanceJoint</b> to have upper and lower limits of <b>0</b> would
+                    better be served by using a <b>PivotJoint</b>
+                </p>
+                <img src="../assets/DistanceJoint.png" alt="[DistanceJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+jointMin &lt;= distance(body2.localPointToWorld(anchor2), body1.localPointToWorld(anchor1)) &lt;= jointMax;</pre>
+                <p>
+                    Construction of a <b>DistanceJoint</b> requires two <b>Bodies</b> together with two <b>Vec2s</b> defining
+                    the local anchor points, as well as the two lower and upper limits for the joint.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var distanceJoint:Constraint = new DistanceJoint(body1, body2, anchor1, anchor2, jointMin, jointMax);</pre>
+
+                <strong><span class="section">AngleJoint</span></strong>
+                <p>
+                    An <b>AngleJoint</b> constrains the weighted, relative rotation of two <b>Bodies</b> to be restricted to a given range. Remembering that <b>Body</b> rotations are unbounded, we can define a range greater than <b>2*Math.PI</b>.
+                </p>
+                <img src="../assets/AngleJoint.png" alt="[AngleJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+jointMin &lt;= (ratio * body2.rotation) - body1.rotation &lt;= jointMax</pre>
+                <p>
+                    Construction of a <b>AngleJoint</b> requires two <b>Bodies</b> together with the joint limits.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var angleJoint:Constraint = new AngleJoint(body1, body2, jointMin, jointMax);</pre>
+
+                <strong><span class="section">LineJoint</span></strong>
+                <p>
+                    A <b>LineJoint</b> constrains the anchor of one body, to be constrained to a <b>line segment</b> defined
+                    on the other. You can think of this as a <b>PivotJoint</b> except that the first body anchor is
+                    replaced by a <b>line segment</b>.
+                </p>
+                <p>
+                    This <b>line segment</b> is represented in the most general way, by use of: a <b>position</b> on the line,
+                    the line <b>direction</b>, and an <b>upper</b> and <b>lower</b> limit on signed distance along the line.
+                    This way we can represent normal line segments, as well as rays and infinite lines.
+                </p>
+                <img src="../assets/LineJoint.png" alt="[LineJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+let dir = body1.localVectorToWorld(direction).unit();
+let del = body2.localPointToWorld(anchor2).sub(body1.localPointToWorld(anchor1));
+
+jointMin &lt;= dir.dot(del) &lt;= jointMax
+dir.cross(del) == 0;</pre>
+                <p>
+                    Construction of a <b>LineJoint</b> requires two <b>Bodies</b> together with the <b>anchors</b> and the <b>line direction</b> and joint limits.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var lineJoint:Constraint = new LineJoint(body1, body2, anchor1, anchor2, direction, jointMin, jointMax);</pre>
+                <p>
+                    To convert from an actual <b>line segment</b> to the required format used by the <b>LineJoint</b> we
+                    can do:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var anchor1:Vec2 = segmentStart;
+var direction:Vec2 = segmentEnd.sub(segmentStart);
+var jointMin:Float = 0;
+var jointMax:Float = direction.length;</pre>
+                <strong><span class="section">MotorJoint</span></strong>
+                <p>
+                    A <b>MotorJoint</b> is a velocity-only constraint, which constrains the angular velocities of the two bodies, so that their weighted sum is set to a specific rate.
+                </p>
+                <img src="../assets/MotorJoint.png" alt="[MotorJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+(ratio * body2.angularVel) - body1.angularVel = rate</pre>
+                <p>
+                    Construction of a <b>MotorJoint</b> requires two <b>Bodies</b> together with the optional <b>rate</b> and <b>ratio</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var motorJoint:Constraint = new MotorJoint(body1, body2, rate = 0, ratio = 1);</pre>
+
+                <strong><span class="section">PulleyJoint</span></strong>
+                <p>
+                    A <b>PulleyJoint</b> constrains the weighted sum of distances between two pairs of four locally defined points on the <b>Bodies</b> to be restricted to a given range.
+                </p>
+                <p>
+                    This is, in the most general usage a <b>4</b> body constraint, though it may be used in <b>2</b> and <b>3</b> body set-ups also. The 3-body set-ups are most recognisable
+                    as being a pulley; especially if the middle body is static and we get a simple system where one body get's closer, the other get's further away with a positive ratio.
+                </p>
+                <img src="../assets/PulleyJoint.png" alt="[PulleyJoint diagram]"/>
+                <p>
+                    You could represent this like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var distance12 = distance(body2.localPointToWorld(anchor2), body1.localPointToWorld(anchor1));
+var distance34 = distance(body4.localPointToWorld(anchor4), body3.localPointToWorld(anchor3));
+jointMin <= (distance12 + ratio * distance34) <= jointMax</pre>
+                <p>
+                    Construction of a <b>PulleyJoint</b> requires four <b>Bodies</b> (body1 != body2 and body3 != body4) together with four <b>Vec2s</b> defining the local anchor points
+                    and the ratio, and lower and upper limits for joint.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var pulleyJoint:Constraint = new PulleyJoint(
+    body1, body2, body3, body4,
+    anchor1, anchor2, anchor3, anchor4,
+    jointMin, jointMax, ratio = 1);</pre>
+
+                <strong><span class="section">UserConstraint</span></strong>
+                <p>
+                    The <b>UserConstraint</b> is an advanced API for power-users; <b>UserConstraint</b> provides a way to implement
+                    low-level, custom constraints whilst still being able to make constraints <b>elastic</b>, or <b>breakable</b> without any work on your side.
+                </p>
+                <p>
+                    The <b>nape-symbolic</b> module, provides a higher-level interface to <b>UserConstraint</b> where constraint definitions can be written in a <b>DSL</b> that is compiled at run-time to a <b>SymbolicConstraint</b> object derived from
+                    <b>UserConstraint</b>.
+                </p>
+                <p>
+                    For information on using the <b>UserConstraint</b> type, and examples of the <b>SymbolicConstraint</b>, checkout <a class="doclink" href="Constraints.pdf">this</a> pdf.
+                </p>
+            </div>
+
+            <hr class="hrchapter"/>
+            <div class="chapter"><strong><span class="title">Compounds</span></strong>
+                <div class="contents" id="skip-Compounds"></div>
+                <p>
+                    <b>Compounds</b> are a way of logically grouping <b>Bodies</b>, <b>Constraints</b> and other
+                    <b>Compounds</b> together into a single object. With respect to the <b>Nape</b> API, this <b>Compound</b>
+                    can largely be treat as a single object.
+                </p>
+                <p>
+                    Example:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var c = new Compound();
+body1.compound = c;
+body2.compound = c;
+constraint.compound = c;
+c.space = space;</pre>
+                <p>
+                    Note that we added the <b>Compound</b> to the <b>Space</b> instead of the individual objects that form
+                    the <b>Compound</b>. Equally, we remove the <b>Compound</b> from the <b>Space</b> instead of its separate
+                    constituents.
+                </p>
+                <strong><span class="section">Copying</span></strong>
+                <img src="../assets/Compound.png" alt="[Compound diagram]"/>
+                <p>
+                    When it comes to producing a <b>copy</b> of a <b>Compound</b> then you may find that not all
+                    <b>Constraints</b> have their body references set, as it is not required for a <b>Constraint</b> to
+                    reference only <b>Bodies</b> contained in the <b>Compound</b>. In the <b>diagram</b> we have the
+                    <b>Constraint</b> <b>Co1</b> that is assigned to <b>Compound</b> <b>C2</b>, but references <b>Body</b>
+                    <b>B2</b> that is outside of the visibility of <b>C2</b>.
+                </p>
+                <p>
+                    In this example, if we produce a copy of <b>C1</b>, then everything will turn out okay. However if we produce
+                    a copy of <b>C2</b>, then the <b>Constraint</b> <b>Co1</b> will have a <b>null</b> reference where the
+                    original referenced <b>B2</b> as that <b>Body</b> was not part of the <b>Compound</b> being copied.
+                </p>
+            </div>
+
+            <hr class="hrchapter">
+            <div class="chapter"><strong><span class="title">Callbacks</span></strong>
+                <div class="contents" id="skip-Callbacks"></div>
+                <p>
+                    The <b>callbacks</b> system in <b>Nape</b> lets you receive <b>events</b> when certain actions occur such
+                    as a <b>Body</b> going to sleep, or a <b>Constraint</b> being broken, or two <b>Interactors</b> (shapes, bodies, compounds) beginning an interaction.
+                </p>
+                <p>
+                    The <b>callbacks</b> system in <b>Nape</b> is much higher-level than you may be familiar with if coming
+                    from another physics engine, or even the events system in <b>Flash</b>.
+                </p>
+
+                <strong><span class="section">CbTypes</span></strong>
+                <p>
+                    <b>CbTypes</b> may be considered as <b>tags</b> that you assign to objects. In <b>Nape</b> it is these <b>CbTypes</b> over which we listen for <b>events</b>. We can assign as many <b>CbTypes</b> as you wish to an object, so we can make our code <b>modular</b>.
+                </p>
+                <p>
+                    For example; we could have behaviour in your game where certain types of objects are killed by <b>spikes</b>. We could give the <b>spikes</b> a <i>SPIKE</i> <b>CbType</b>, and any object that can be killed by them a <i>SPIKEABLE</i> <b>CbType</b>. Additionally we could have some collectable objects, and give them a <b>CbType</b> <i>COLLECTABLE</i>, and objects that can pick up those <i>collectables</i> a <i>COLLECTOR</i> <b>CbType</b>; since we can assign multiple <b>CbTypes</b> we don't need to worry about overlaps, or the need to add new behaviours later.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var SPIKE       = new CbType();
+var SPIKEABLE   = new CbType();
+var COLLECTABLE = new CbType();
+var COLLECTOR   = new CbType();
+
+for (obj in spikeyObjects) {
+    obj.cbTypes.add(SPIKE);
+}
+for (obj in collectables) {
+    obj.cbTypes.add(COLLECTABLE);
+}
+// etc.</pre>
+
+                <strong><span class="section">Listener Options</span></strong>
+                <p>
+                    <b>Listeners</b> operate over <b>CbTypes</b>, or specifically over sets of <b>CbTypes</b> using an inclusion-exclusion API. This is represented by the <b>OptionType</b> object which has an inclusion, and exclusion set of <b>CbTypes</b>. An objects set of <b>CbTypes</b> matches the <b>options</b> if it contains at least one of the <b>included</b> types, and contains none of the <b>excluded</b> types.
+                </p>
+                <p>
+                    The <b>constructors</b> for the various listeners take this <b>options</b> object as argument, but are typed dynamically to accept one of: <b>CbType</b>, <b>OptionType</b>,
+                    <b>CbTypeList</b>, <b>Array&lt;</b><b>CbType</b><b>&gt;</b>, <b>flash.Vector&lt;</b><b>CbType</b><b>&gt;</b>.
+                    This means that we can specify our <b>Cbtypes</b> to match against like:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// match against any object having the SPIKE type.
+options = SPIKE
+
+// match against any object having - inclusively - the SPIKE or COLLECTABLE type
+options = [SPIKE, COLLECTABLE]
+
+// match against any object having the SPIKE type, but that does not have the COLLECTABLE type.
+options = SPIKE.excluding(COLLECTABLE)
+
+// match against any object having - inclusively - the SPIKE OR COLLECTABLE type
+// but that does not have either one of the COLLECTOR type or SPIKEABLE type.
+options = new OptionType([SPIKE, COLLECTABLE]).excluding([COLLECTOR, SPIKEABLE])
+// or
+options = SPIKE.including(COLLECTABLE).excluding(COLLECTOR).excluding(SPIKEABLE)
+// etc.
+</pre>
+                <p>
+                    This API was chosen, as it is powerful, but still highly efficient to implement internally. If you wish to have
+                    any further constraints, such as requiring <b>both</b> of two <b>CbTypes</b>, then you will need to perform this additional logic in your <b>event handlers</b>. Specifically, this system is powerful enough for the following:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// match against 'any' Body that does not have the SPIKE type
+options = CbType.ANY_BODY.excluding(SPIKE)
+
+// match against 'any' Shape, or body
+options = [CbType.ANY_BODY, CbType.ANY_SHAPE]</pre>
+                <p>
+                    There is no special magic going on here, <b>CbType</b>.<b>ANY_BODY</b> is just a normal <b>CbType</b> that happens to be
+                    assigned to all <b>Bodies</b> on construction. There is also <b>CbType</b>.<b>ANY_COMPOUND</b> and <b>CbType</b>.<b>ANY_CONSTRAINT</b>.
+                </p>
+
+                <strong><span class="section">BodyListeners</span></strong>
+                <p>
+                    <b>BodyListeners</b> handle <b>events</b> associated with a single <b>Body</b> object, these callbacks occur at the end of a <b>space.step()</b> call, and so you are free to do whatever you wish. Supported <b>events</b> are:
+                    <ul>
+                        <li><b>CbEvent</b>.SLEEP</li>
+                        <li><b>CbEvent</b>.WAKE</li>
+                    </ul>
+                </p>
+                <p>
+                    Creating a <b>BodyListener</b>, we use the constructor - having the following format:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var listener:Listener = new BodyListener(event, options, handler, precedence = 0);</pre>
+                <p>
+                    Where the handler has type <b>BodyCallback</b>-&gt;Void. The <b>precedence</b> determines in what order the
+                    handlers will be called in the situation that there are multiple <b>BodyListeners</b> that can be applied
+                    to the situation.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+function bodyWakeHandler(cb:BodyCallback):Void {
+    var wokenBody:Body = cb.body;
+}</pre>
+                <strong><span class="section">ConstraintListeners</span></strong>
+                <p>
+                    <b>ConstraintListeners</b> handle <b>events</b> associated with a single <b>Constraint</b> object, these
+                    callbacks occur at the end of a <b>space.step()</b> call, and so you are free to do whatever you wish. Supported <b>events</b> are:
+                    <ul>
+                        <li><b>CbEvent</b>.SLEEP</li>
+                        <li><b>CbEvent</b>.WAKE</li>
+                        <li><b>CbEvent</b>.BREAK</li>
+                    </ul>
+                </p>
+                <p>
+                    Creating a <b>ConstraintListener</b>, we use the constructor - having the following format:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var listener:Listener = new ConstraintListener(event, options, handler, precedence = 0);</pre>
+                <p>
+                    Where the handler has type <b>ConstraintCallback</b>-&gt;Void.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+function constraintWakeHandler(cb:ConstraintCallback):Void {
+    var wokenConstraint:Constraint = cb.constraint;
+}</pre>
+
+                <strong><span class="section">InteractionListeners</span></strong>
+                <p>
+                    <b>InteractionListeners</b> handle <b>events</b> associated with a pair of <b>Interactor</b> objects (<b>Shapes</b>, <b>Compounds</b>, <b>Bodies</b>), these
+                    callbacks occur at the end of a <b>space.step()</b> call, and so you are free to do whatever you wish. Supported <b>events</b> are:
+                    <ul>
+                        <li><b>CbEvent</b>.BEGIN</li>
+                        <li><b>CbEvent</b>.ONGOING</li>
+                        <li><b>CbEvent</b>.END</li>
+                    </ul>
+                </p>
+                <p>
+                    The <b>BEGIN</b> event occurs in the first <b>step</b> of which the objects interact. The <b>End</b> event in the first <b>step</b> in which the objects no longer interact. The <b>ONGOING</b> event in all steps for which the objects interact, overlapping with the <b>BEGIN</b> event.
+                </p>
+                <p>
+                    Creating a <b>InteractionListener</b>, we use the constructor - having the following format:
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var listener = new InteractionListener(event, interactionType, options1, options2, handler, precedence = 0);</pre>
+                <p>
+                    Where the handler has type <b>InteractionCallback</b>-&gt;Void, and the interactionType argument is one of the enumerations specified by <b>InteractionType</b> object.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+function beginHandler(cb:InteractionCallback):Void {
+    var firstObject:Interactor = cb.int1;
+    var secondObject:Interactor = cb.int2;
+}</pre>
+                <p>
+                    The <b>int1</b> property of the callback, will always match against the first <b>options</b> property of
+                    the listener, and <b>int2</b> the second.
+                </p>
+
+                <strong><span class="section">PreListeners</span></strong>
+                <p>
+                    <b>PreListeners</b> are a special variation of <b>InteractionListeners</b> for a specific event type.
+                    This sort of event occurs as soon as two <b>Interactors</b> are found to be intersecting, but before
+                    any physics is performed. The handler can choose to <b>ignore</b> the interaction, or perform actions
+                    like modifying <b>Arbiter</b> friction values.
+                </p>
+                <p>
+                    The handler for these events occurs right in the middle of a <b>space step</b>, and so what we can do
+                    is limited. We cannot add or remove bodies etc; these are better done with a <b>BEGIN</b> event handler
+                    using the <b>InteractionListener</b>.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var listener = new PreListener(interactionType, options1, options2, handler, precedence = 0, pure = false);</pre>
+                <p>
+                    The handler for this listener has type <b>PreListener</b>-&gt;Null&lt;<b>PreFlag</b>&gt;. The <b>PreFlag</b> enumeration has possible values:
+                    <table class="dl">
+                        <tr><td class="dt"><b>PreFlag</b>.<b>ACCEPT</b></td><td class="tdsp"></td><td>Accept the interaction, for <b>this step</b>, and <b>all steps</b> that follow. If this is the final state of the interaction, then the <b>PreListener</b> will no longer take effect until the objects have separated and interact anew.</td></tr>
+                        <tr><td class="dt"><b>PreFlag</b>.<b>IGNORE</b></td><td class="tdsp"></td><td>Ignore the interaction, for <b>this step</b>, and <b>all steps</b> that follow. If this is the final state of the interaction, then the <b>PreListener</b> will no longer take effect until the objects have separated and interact anew.</td></tr>
+                        <tr><td class="dt"><b>PreFlag</b>.<b>ACCEPT_ONCE</b></td><td class="tdsp"></td><td>Accept the interaction for <b>this step</b>. If this is the final state of the interaction, then the <b>PreListener</b> will be invoked in the following step to ask again.</td></tr>
+                        <tr><td class="dt"><b>PreFlag</b>.<b>IGNORE_ONCE</b></td><td class="tdsp"></td><td>Ignore the interaction for <b>this step</b>. If this is the final state of the interaction, then the <b>PreListener</b> will be invoked in the following step to ask again.</td></tr>
+                    </table>
+                </p>
+                <p>
+                    If the handler returns <b>null</b>, then the handler will have no effect on the state of the interaction. The default is <b>PreFlag</b>.<b>ACCEPT_ONCE</b>.
+                </p>
+                <p>
+                    The <b>pure</b> argument, is important when it comes to using the <b>ACCEPT_ONCE</b>, <b>IGNORE_ONCE</b> states. If your handler is non-deterministic, then it is not possible for <b>Nape</b> to permit objects to go to sleep as your handler may suddenly change its mind about what to do with the interaction. If your handler <b>is</b> deterministic, then you should set <b>pure</b> to <b>true</b> and it is no longer necessary to stop objects going to sleep.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Non-deterministic (pure=false) handler
+function impureHandler(cb:PreCallback):PreFlag {
+    if (Math.random() < 0.5) return PreFlag.IGNORE_ONCE;
+    else return null;
+}
+
+// Non-deterministic (pure=false) handler
+function impureHandler2(cb:PreCallback):PreFlag {
+    if (getTimer() > 2000) return PreFlag.ACCEPT_ONCE;
+    else return PreFlag.IGNORE_ONCE;
+}
+
+// Deterministic (pure=true) handler.
+function pureHandler(cb:PreCallback):PreFlag {
+    // cb.arbiter is an input to the function, so we can make decisions with it.
+    if (cb.arbiter.normal.y > 0) return PreFlag.IGNORE_ONCE;
+    else return PreFlag.ACCEPT_ONCE;
+}</pre>
+
+            </div>
+
+            <hr class="hrchapter">
+            <div class="chapter"><strong><span class="title">Arbiters &amp; Contacts</span></strong>
+                <div class="contents" id="skip-Arbiters &amp; Contacts"></div>
+                <p>
+                    <b>Arbiter</b> objects represent the state of <b>interactions</b> in <b>Nape</b>. They can be accessed
+                    through the <b>arbiters</b> lists on <b>Bodies</b>, <b>InteractionCallbacks</b> and the <b>arbiter</b> property on <b>PreCallback</b> objects.
+                </p>
+                <p>
+                    Apart from the <b>Arbiter</b> class, there are two sub-types <b>FluidArbiter</b> and <b>CollisionArbiter</b> corresponding to the associated interaction types that record additional information.
+                </p>
+                <p>
+                    The <b>arbiters</b> list on <b>Bodies</b> records all <b>Arbiters</b> that exist making use of that <b>Body</b>. The <b>arbiters</b> list on <b>InteractionCallbacks</b> records all <b>Arbiters</b> between the two <b>Interactors</b> (Note that this list does not discriminate based on the <b>InteractionType</b> handled by <b>Listener</b>). The <b>arbiter</b> property on the <b>PreCallback</b> objects, corresponds to the first pair of <b>Shapes</b> that are tested during collision detection for the pair of <b>Interactors</b>.
+                </p>
+
+                <strong><span class="section">FluidArbiters</span></strong>
+                <p>
+                    <b>FluidArbiters</b> correspond to <b>fluid</b> type interactions, and record the <b>centre of buoyancy</b> corresponding to the centre of the intersection of the associated <b>Shapes</b>, and the <b>area</b> of the intersection.
+                </p>
+                <img src="../assets/fluidarbiter.png" width="190" alt="[FluidArbiter diagram]"/>
+                <p>
+                    There is no access to the profile of the intersection area, as this is not computed in a suitable format
+                    for exposure.
+                </p>
+
+                <strong><span class="section">CollisionArbiters</span></strong>
+                <p>
+                    <b>CollisionArbiters</b> correspond to normal <b>collision</b> type interactions, and record the <b>collision normal</b> together with a set of <b>Contact</b> objects (Maximum 2) corresponding to the collision manifold.
+                </p>
+                <img src="../assets/colarbiter.png" width="320" alt="[CollisionArbiter diagram]"/>
+                <p>
+                    Specifically, a collision between <b>two polygons</b> will always have <b>2</b> contacts, though in the general case one of these (Represented in blue in diagram) is a speculative contact that will have <b>negative</b> penetration. A collision between a <b>circle</b> and a <b>polygon</b> will always have exactly <b>1</b> contact.
+                </p>
+                <p>
+                    You can also get access to the <b>colliding features</b> of the objects through the <b>CollisionArbiter</b>.
+                </p>
+                <img src="../assets/features.png" alt="[Collision Features diagram]"/>
+                <p>
+                    The <b>referenceEdge1</b>/<b>referenceEdge2</b> properties correlate to the colliding <b>Edge</b> of the respective <b>Polygon</b> or <b>null</b> if the corresponding shape is a <b>Circle</b>. In the case of a <b>Circle</b>-<b>Polygon</b> collision, there are the methods <b>firstVertex</b>/<b>secondVertex</b> of which one may return <b>true</b> if the <b>Circle</b> is colliding with a <b>vertex</b> of the reference edge, instead of the edge itself.
+                </p>
+            </div>
+
+            <hr class="hrchapter">
+            <div class="chapter"><strong><span class="title">Object Pooling</span></strong>
+                <div class="contents" id="skip-Object Pooling"></div>
+                <p>
+                    <b>Nape</b> uses <b>object pooling</b> for a large amount of internal objects such as the <b>Contacts</b> and <b>Arbiters</b> where it is suggested you do not hold reference to them as they may be recycled.
+                </p>
+                <p>
+                    More specifically, <b>Nape</b> has <b>object pooling</b> for the <b>Vec2</b> and <b>Vec3</b> objects that
+                    may be used extensively on the public side of the <b>API</b> too, as well as the <b>GeomPoly</b> object type.
+                </p>
+                <p>
+                    In both cases, instead of using the <b>constructor</b>, it is suggested you use the <b>static</b> <b>get</b> method to allocate an object from the <b>pool</b> if possible.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var heapVec2 = new Vec2(?x, ?y);
+var heapVec3 = new Vec3(?x, ?y, ?z);
+var helpPoly = new GeomPoly(?vertices);
+
+// better to use
+var pooledVec2 = Vec2.get(?x, ?y);
+var pooledVec3 = Vec3.get(?x, ?y, ?z);
+var pooledPoly = GeomPoly.get(?vertices);
+
+// And to release back to object pool
+pooledVec2.dispose();
+pooledVec3.dispose();
+pooledPoly.dispose();</pre>
+
+                <strong><span class="section">Weak Vec2s</span></strong>
+                <p>
+                    For <b>Vec2s</b> there is an additional API named <b>weak</b> <b>Vec2s</b>. The purpose of this is to
+                    make using object pooled <b>Vec2s</b> easier, when they are used as temporary values. When a <b>weak</b>
+                    <b>Vec2</b> is passed to <i>any</i> <b>Nape</b> function, it will be automatically released to the object
+                    pool on exit.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+// Instead of:
+var tmp = Vec2.get(x, y);
+someNapeFunctionCall(tmp);
+tmp.dispose();
+
+// Or
+var tmp = Vec2.get(x, y);
+napeObject.vec2Property = tmp; // equivalent to napeObject.vec2Property.set(tmp);
+tmp.dispose();
+
+// We can do:
+someNapeFunction(Vec2.weak(x, y));
+napeObject.vec2Property = Vec2.weak(x, y);</pre>
+                <p>
+                    <b>Nape</b> functions which return a <b>Vec2</b> will also have an optional argument that specifies if
+                    you want the returned <b>Vec2</b> to be weak or not. This is also the case for methods like <b>Polygon</b>.</b>box</b> which can be asked to return an <b>Array</b> of <b>weak</b> <b>Vec2s</b> which when used as argument to <b>Polygon</b> constructor will have all the <b>Vec2s</b> sent to object pool automatically.
+                </p>
+                <pre class="prettyprint largecodestyle standard boxedcode">
+var boxPoints = Polygon.box(w, h, true);
+var box = new Polygon(boxPoints);
+trace(boxPoints.length); // 0, they were automatically sent to object pool.</pre>
+            </div>
+
+
+            <hr class="hrchapter">
+            <div class="chapter"><strong><span class="title">Geometric Utilities</span></strong>
+                <div class="contents" id="skip-Geometric Utilities"></div>
+                <p>
+                    The <b>GeomPoly</b> object encapsulates the majority of <b>geometric utilities</b> in <b>Nape</b>. It
+                    can be constructed in the same way as a <b>Polygon</b> accepting one of: <b>Array</b>&lt;<b>Vec2</b>&gt;, <b>flash.Vector</b>&lt;<b>Vec2</b>&gt;, <b>Vec2List</b> or another <b>GeomPoly</b>.
+                </p>
+                <p>
+                    <b>GeomPoly</b> can represent any polygon, representable by a single chain of vertices including representing holes via cuts in the polygon. With the exception of the <b>simpleDecomposition</b>, all geometric utilities should be <b>100%</b> robust.
+                </p>
+                <img src="../assets/polyTypes.png" width="620" alt="[Polygon types diagram]"/>
+                <p>
+                <table class="dl">
+                    <tr><td class="dt"><b>Triangular</b></td><td class="tdsp"></td><td>Having 3 vertices.</td></tr>
+                    <tr><td class="dt"><b>Convex</b></td><td class="tdsp"></td><td>Having no internal angles greater than 180 degrees; intuitively no <i>dips</i> in the surface. <b>Polygons</b> in <b>Nape</b> must be convex.</td></tr>
+                    <tr><td class="dt"><b>Y-Monotone</b></td><td class="tdsp"></td><td>Any horizontal line cuts the polygon at most twice. You could think of a <b>convex</b> polygon, as being one that is monotone in <b>every</b> direction.</td></tr>
+                    <tr><td class="dt"><b>Concave</b></td><td class="tdsp"></td><td>Any non self-intersecting polygon.</td></tr>
+                    <tr><td class="dt"><b>Weakly-Simple</b></td><td class="tdsp"></td><td>A self intersecting polygon, where all self-intersections are areas of the polygon <b>touching</b> itself, but not actually overlapping.</td></tr>
+                    <tr><td class="dt"><b>Complex</b></td><td class="tdsp"></td><td>Any polygon.</td></tr>
+                </table>
+                </p>
+
+                <strong><span class="section">Simple Decomposition</span></strong>
+                <p>
+                    The <b>simpleDecomposition</b> method of the <b>GeomPoly</b> type transforms <b>complex</b> polygons, into a set of <b>weakly-simple</b> ones. This decomposition will consider a point to be inside of the <b>complex</b> polygon following the normal rule of having an odd number of intersections on any <b>ray</b> beginning at the point.
+                </p>
+                <img src="../assets/inout.png" alt="[Polygon in-out diagram]"/>
+                <p>
+                <table class="dl">
+                    <tr><td class="dt"><b>NOTE:</b></td><td class="tdsp"></td><td>This method is <b>not</b> 100% robust, you should not rely on it <b>always</b> producing the correct result, or producing a run-time error!</td></tr>
+                </table>
+                </p>
+
+                <strong><span class="section">Other Decompositions</span></strong>
+                <p>
+                    The rest of the <b>GeomPoly</b> decomposition methods: <b>monotoneDecomposition</b>, <b>convexDecomposition</b> and <b>triangularDecomposition</b> all handle as input, a <b>weakly-simple</b> (or lesser) polygon. All of these methods should be <b>100%</b> robust.
+                </p>
+                <img src="../assets/decomp.png" alt="[Decomposition diagram]"/>
+                <p>
+                    All of these algorithms have <b>O(n.log(n))</b> run-time.
+                </p>
+
+                <strong><span class="section">Simplification</span></strong>
+                <p>
+                    Polygons can be <b>simplified</b> in <b>Nape</b> using the Ramer-Douglas-Peucker algorithm implemented by the <b>simplify</b> method. This algorithm
+                    takes a distance threshold as input, and produces a polygon so that the distance <b>between</b> the polygons is at most the given distance.
+                </p>
+                <img src="../assets/simpling.png" alt="[Simplification diagram]"/>
+                <p>
+                    This algorithm has <b>O(n.log(n))</b> run-time. <b>NOTE:</b> you must be careful when using this method, as
+                    if you have a polygon that has complex features that nearly touch each other, but do not self-intersect, and you use too high a distance threshold it is possible for the output polygon to now be self-intersecting! A <b>convex</b> polygon will however always be transformed into a new <b>convex</b> polygon.
+                </p>
+
+                <strong><span class="section">Marching Squares</span></strong>
+                <p>
+                    The <b>MarchingSquares</b> class, gives access to a very efficient, and <b>100%</b> stable implementation of the <b>marching squares</b> algorithm producing <b>weakly-simple</b> polygons suitable for further decomposition in <b>Nape</b>. The <b>marching squares</b> algorithm performs iso-surface extractions given a scalar function over a rectangular region.
+                </p>
+                <img src="../assets/march.png" alt="[Marching Squares diagram]"/>
+                <p>
+                   Along with the rectangular region, the algorithm takes a grid size that is used to <b>discretise</b> the domain. The iso-function is defined to take the <b>(x,y)</b> coordinates of point, and return another scalar value; the algorithm produces polygons in areas where the iso-function returns a value <b>&lt;=0</b>.
+                </p>
+                <p>
+                    Assuming a <b>constant time</b> iso-function, this <b>marching squares</b> implementation, including combining output into larger polygons shown in the diagram, runs in <b>linear time</b> for the number of cells in the grid.
+                </p>
+                <p>
+                    The most useful application of this, is that we can define the iso-function to sample a <b>Bitmap</b>, we could for example define the iso-function to return <b>0x80-alphaAt(x, y)</b> so that we extract polygons representing the visible areas of the <b>Bitmap</b>.
+                </p>
+            </div>
+        </div>
+        <footer>
+            copy; Luca Deltodesco 2012
+        </footer>
+    </div>
+
+    <script src="../assets/js/jquery.min.js"></script>
+    <script src="../assets/js/default.js"></script>
+    <script src="../assets/js/submenu.js"></script>
+    <script src="../assets/js/contents.js"></script>
+    <script src="../assets/prettify/prettify.js"></script>
+    <script src="../assets/js/doclinks.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            prettyPrint();
+            applyDocLinks();
+        });
+    </script>
+    </body>
+</html>
+
